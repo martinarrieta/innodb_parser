@@ -2,25 +2,21 @@ import io
 
 PAGE_SIZE=16*1024
 
-# This is a checksum of the page
-SIZE_FIL_PAGE_SPACE             = 4
-SIZE_FIL_PAGE_OFFSET            = 4
-SIZE_FIL_PAGE_PREV              = 4
-SIZE_FIL_PAGE_NEXT              = 4
-SIZE_FIL_PAGE_LSN               = 8
-SIZE_FIL_PAGE_TYPE              = 2
-SIZE_FIL_PAGE_FILE_FLUSH_LSN    = 8
-SIZE_FIL_PAGE_ARCH_LOG_NO       = 4
 
+SIZE_FIL_PAGE_DATA              = 38
 
-OFFSET_FIL_PAGE_SPACE           = 0
-OFFSET_FIL_PAGE_OFFSET          = OFFSET_FIL_PAGE_SPACE + SIZE_FIL_PAGE_SPACE
-OFFSET_FIL_PAGE_PREV            = OFFSET_FIL_PAGE_OFFSET + SIZE_FIL_PAGE_OFFSET 
-OFFSET_FIL_PAGE_NEXT            = OFFSET_FIL_PAGE_PREV + SIZE_FIL_PAGE_PREV
-OFFSET_FIL_PAGE_LSN             = OFFSET_FIL_PAGE_NEXT + SIZE_FIL_PAGE_NEXT
-OFFSET_FIL_PAGE_TYPE            = OFFSET_FIL_PAGE_LSN + SIZE_FIL_PAGE_LSN
-OFFSET_FIL_PAGE_FILE_FLUSH_LSN  = OFFSET_FIL_PAGE_TYPE + SIZE_FIL_PAGE_TYPE
-OFFSET_FIL_PAGE_ARCH_LOG_NO     = OFFSET_FIL_PAGE_FILE_FLUSH_LSN + SIZE_FIL_PAGE_FILE_FLUSH_LSN
+SIZE_PAGE_N_DIR_SLOTS           = 2
+
+PAGE_STRUCTURE={ 
+    "FIL_PAGE_SPACE"            :{"offset":0,  "size":4},
+    "FIL_PAGE_OFFSET"           :{"offset":4,  "size":4},
+    "FIL_PAGE_PREV"             :{"offset":8,  "size":4},
+    "FIL_PAGE_NEXT"             :{"offset":12, "size":4},
+    "FIL_PAGE_LSN"              :{"offset":16, "size":8},
+    "FIL_PAGE_TYPE"             :{"offset":24, "size":2},
+    "FIL_PAGE_FILE_FLUSH_LSN"   :{"offset":26, "size":8},
+    "FIL_PAGE_ARCH_LOG_NO"      :{"offset":34, "size":4},
+}
 
 # File page types (values of FIL_PAGE_TYPE) */
 #define FIL_PAGE_INDEX          17855   /* B-tree node */
@@ -76,26 +72,67 @@ class TableSpace():
             self.file = open(filename, 'rb')
         except IOERror:
             print "Error to open the file %s" % self.filename
-            
-        
-        
-    def getpage(self, number=0):
+
+    def getpage(self, offset=0):
         """docstring for getpage"""
-        if number > 0:
+        
+        return Page(self.getpagesraw(offset=offset, limit=1)[0])
+    
+    def getpagesraw(self, offset=0, limit=1):
+        """docstring for getpageraw"""
+        if offset > 0:
             self.file.seek(PAGE_SIZE * number)
-            
-        return self.file.read(PAGE_SIZE)
+        
+        values = []
+        for x in range(0, limit):
+            chunk = self.file.read(PAGE_SIZE)
+            if chunk:
+               values.append(chunk)
+            else:
+                break
+         
+        return values
+
+    def getpages(self, offset=0, limit=10):
+        """docstring for getpages"""
+        values = self.getpagesraw(offset, limit)
+        
+        pages = []
+        for v in values:
+            pages.append(Page(v))
+        
+        return pages
 
 class Page():
     """docstring for Page"""
     def __init__(self, data):
         self.data = data
         
-    def getheader(self):
+    def get_header(self):
         """docstring for getheader"""
-        return self.data.read(32)
+        return self.data.read(38)
     
-    def gettype(self):
+    def get_id(self):
+        """docstring for get_id"""
+        attr = PAGE_STRUCTURE["FIL_PAGE_SPACE"]
+        return self.get_attribute(attr)
+
+    def get_nextpageid(self):
+        """docstring for get_id"""
+        attr = PAGE_STRUCTURE["FIL_PAGE_NEXT"]
+        return self.get_attribute(attr)
+    
+    def get_prevpageid(self):
+        """docstring for get_id"""
+        attr = PAGE_STRUCTURE["FIL_PAGE_PREV"]
+        return self.get_attribute(attr)
+
         
-        return data2int(self.data[OFFSET_FIL_PAGE_TYPE:OFFSET_FIL_PAGE_TYPE + SIZE_FIL_PAGE_TYPE])
+    def get_type(self):
         
+        attr = PAGE_STRUCTURE["FIL_PAGE_TYPE"]
+        return self.get_attribute(attr)
+
+    def get_attribute(self, attr):
+        """docstring for get_attribute"""
+        return data2int(self.data[attr["offset"]:attr["offset"] + attr["size"]])

@@ -22,29 +22,35 @@ with io.open("./ibdata55", mode='rb') as f:
 
 t = tablespace.TableSpace(filename="./ibdata55")
 
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
-print tablespace.Page(t.getpage()).gettype()
+
+def print_pageinfo(page):
+    """docstring for print_pageinfo"""
+    if page.get_type() == tablespace.FIL_PAGE_INDEX:
+        print "Page id: %s" % page.get_id()
+        print "\tnext: %s " % page.get_nextpageid()
+        print "\tprev: %s" % page.get_prevpageid()
+    else:
+        print "Page id: %s" % page.get_id()
+        print "\ttype: %s" % page.get_type()
+        
+        
+
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+print_pageinfo(t.getpage())
+
+print "With get_pages()"
+
+pages = t.getpages(0, 100)
+
+for p in pages:
+    print_pageinfo(p)
+    
